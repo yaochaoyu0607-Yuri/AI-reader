@@ -1,17 +1,3 @@
-# AI-reader 仓库目录
-
-本仓库已整理为统一目录：
-
-- `ai-reader-mvp/`：AI 阅读管理系统主项目代码
-  - 包含 `we-mp-rss/` 相关文档归档
-
-## 启动主项目
-
-```bash
-cd "ai-reader-mvp"
-npm install
-npm start
-```
 # AI 公众号阅读管理系统（MVP v1.0）
 
 仅包含两个模块：
