@@ -1,0 +1,12 @@
+<at id=all></at>
+今日 AI 晨报，各位早安[咖啡]
+
+{% if articles %}
+{% for article in articles %}
+[{{ article.title }}]({{ article.url }})
+
+{% endfor %}
+{% else %}
+昨日暂无新增文章
+{% endif %}
+如有高质量内容，欢迎哥哥们投稿分享🫰

@@ -4,6 +4,9 @@
 
 - `ai-reader-mvp/`：AI 阅读管理系统主项目代码
   - 包含 `we-mp-rss/` 相关文档归档
+- `we-mp-rss-data/`：we-mp-rss 本地数据目录（缓存/授权/数据库，默认不入库）
+- `we-mp-rss-patches/`：we-mp-rss 相关补丁脚本
+- `wechat-daily-report/`：日报生成辅助项目
 
 ## 启动主项目
 
@@ -26,7 +29,7 @@ npm start
 ## 启动
 
 ```bash
-cd "/Users/chovy/Desktop/大模型学习/ai-reader-mvp"
+cd "/Users/chovy/Desktop/大模型学习/AI-reader-合集/ai-reader-mvp/ai-reader-mvp"
 npm install
 npm start
 ```
