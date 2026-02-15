@@ -1,0 +1,14 @@
+{
+  "name": "ai-reader-mvp",
+  "version": "1.0.0",
+  "description": "AI 公众号阅读管理系统 MVP v1.0",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "fast-xml-parser": "^5.3.5",
+    "sqlite3": "^5.1.7"
+  }
+}

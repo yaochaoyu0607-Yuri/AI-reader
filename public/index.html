@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 公众号阅读管理系统（MVP v1.0）</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>AI 公众号阅读管理系统（MVP v1.0）</h1>
+      <p>把阅读行为变成可追踪的数据结构</p>
+    </header>
+
+    <main class="container">
+      <section class="control-bar">
+        <div class="status-line" id="stats"></div>
+        <div class="quick-actions">
+          <button id="tagManageBtn" class="alt">标签管理</button>
+          <button id="notesCenterBtn" class="alt">笔记中心</button>
+          <button id="reflectionsCenterBtn" class="alt">感想中心</button>
+        </div>
+        <div class="quick-filters">
+          <label><input type="checkbox" id="unreadOnlyToggle" /> 只看未读</label>
+          <label><input type="checkbox" id="starOnlyToggle" /> 只看星标</label>
+        </div>
+      </section>
+
+      <section class="tag-strip" id="tagStrip"></section>
+      <section class="content-layout">
+        <section id="feed" class="content-main">
+          <div class="empty-state">正在加载文章...</div>
+        </section>
+
+        <aside class="content-side">
+          <section class="sync-panel">
+            <div class="sync-header">
+              <h3>数据同步</h3>
+              <span id="lastSyncText">最近同步：尚未同步</span>
+            </div>
+            <div class="sync-quick">
+              <button id="quickSyncBtn">同步最新文章</button>
+              <small>默认同步最近 30 篇</small>
+            </div>
+            <details class="data-panel">
+              <summary>高级选项</summary>
+              <section class="toolbar">
+                <div class="tool-item">
+                  <label>源地址</label>
+                  <input id="syncBaseUrl" value="http://127.0.0.1:8001" />
+                </div>
+                <div class="tool-item">
+                  <label>同步数量</label>
+                  <input id="syncLimit" value="30" />
+                </div>
+                <div class="tool-item">
+                  <label>feed_id（可选）</label>
+                  <input id="syncFeedIds" placeholder="逗号分隔，例如 MP_WXS_3073282833" />
+                </div>
+                <div class="tool-item">
+                  <button id="syncBtn">按高级参数同步</button>
+                </div>
+                <div class="sync-tools">
+                  <button id="cleanupDupBtn" class="alt">清理重复数据（title+publish_date）</button>
+                  <button id="reconcileDeleteBtn" class="alt">校验删除 we-mp-rss 已不存在文章</button>
+                </div>
+                <div id="syncLog" class="sync-log">同步日志：暂无</div>
+                <div class="tool-item">
+                  <label for="jsonInput">手动导入 JSON（数组）</label>
+                  <textarea id="jsonInput" rows="4" placeholder='[{"title":"...","url":"...","publish_date":"2026-02-12","source":"机器之心"}]'></textarea>
+                  <button id="importBtn">导入</button>
+                </div>
+              </section>
+            </details>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <dialog id="detailDialog">
+      <article class="detail-card">
+        <section class="detail-main">
+          <h3 id="detailTitle"></h3>
+          <p><a id="detailUrl" target="_blank" rel="noreferrer">打开原文</a></p>
+          <div id="detailMeta"></div>
+
+          <h4>标签</h4>
+          <div id="tagList" class="tag-list"></div>
+
+          <div id="tagAddPanel" class="tag-actions">
+            <select id="existingTagSelect">
+              <option value="">选择已有标签（选择即保存）</option>
+            </select>
+          </div>
+
+          <h4>感想</h4>
+          <div class="tag-actions">
+            <textarea id="reflectionInput" rows="4" placeholder="总结观点、评估质量、记录可落地行动"></textarea>
+          </div>
+
+          <footer>
+            <button id="closeDialogBtn">关闭</button>
+          </footer>
+        </section>
+        <aside class="detail-extension">
+          <h4>分段笔记</h4>
+          <div class="tag-actions">
+            <textarea id="newNoteContent" rows="5" placeholder="粘贴原文关键信息，支持多段逐条添加"></textarea>
+            <button id="addNoteBtn">新增笔记段</button>
+          </div>
+          <div id="detailNotes" class="note-list">暂无笔记</div>
+        </aside>
+      </article>
+    </dialog>
+
+    <dialog id="tagManageDialog">
+      <article class="manage-card">
+        <h3>标签管理</h3>
+        <div class="tag-actions">
+          <input id="manageNewTagName" placeholder="输入新标签名" />
+          <button id="manageCreateTagBtn">新增标签</button>
+        </div>
+        <div id="manageTagList" class="manage-list">暂无标签</div>
+        <footer>
+          <button id="closeTagManageBtn">关闭</button>
+        </footer>
+      </article>
+    </dialog>
+
+    <dialog id="notesCenterDialog">
+      <article class="manage-card notes-center-card">
+        <h3>笔记中心</h3>
+        <div class="notes-filter">
+          <input id="notesKeywordInput" placeholder="按关键词检索笔记或文章标题" />
+          <select id="notesTagFilter">
+            <option value="">全部标签</option>
+          </select>
+          <button id="notesSearchBtn">搜索</button>
+        </div>
+        <div id="notesCenterList" class="notes-center-list">暂无笔记</div>
+        <footer>
+          <button id="closeNotesCenterBtn">关闭</button>
+        </footer>
+      </article>
+    </dialog>
+
+    <dialog id="reflectionsCenterDialog">
+      <article class="manage-card notes-center-card">
+        <h3>感想中心</h3>
+        <div class="notes-filter">
+          <input id="reflectionsKeywordInput" placeholder="按关键词检索感想或文章标题" />
+          <select id="reflectionsTagFilter">
+            <option value="">全部标签</option>
+          </select>
+          <button id="reflectionsSearchBtn">搜索</button>
+        </div>
+        <div id="reflectionsCenterList" class="notes-center-list">暂无感想</div>
+        <footer>
+          <button id="closeReflectionsCenterBtn">关闭</button>
+        </footer>
+      </article>
+    </dialog>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
