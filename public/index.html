@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 公众号阅读管理系统（MVP v1.0）</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>AI 公众号阅读管理系统（MVP v1.0）</h1>
+      <p>把阅读行为变成可追踪的数据结构</p>
+    </header>
+
+    <main class="container">
+      <section class="control-bar">
+        <div class="status-line" id="stats"></div>
+        <div class="quick-actions">
+          <button id="aiSettingsBtn" class="alt">AI 设置</button>
+          <button id="tagManageBtn" class="alt">标签管理</button>
+          <button id="notesCenterBtn" class="alt">笔记中心</button>
+          <button id="reflectionsCenterBtn" class="alt">感想中心</button>
+          <button id="knowledgeChatBtn" class="alt">AI Knowledge Chat</button>
+          <button id="readingPriorityBtn" class="alt">Reading Priority</button>
+          <button id="weeklyInsightBtn" class="alt">Weekly Insight</button>
+        </div>
+        <div class="quick-filters">
+          <label><input type="checkbox" id="unreadOnlyToggle" /> 只看未读</label>
+          <label><input type="checkbox" id="starOnlyToggle" /> 只看星标</label>
+        </div>
+      </section>
+
+      <section class="tag-strip" id="tagStrip"></section>
+      <section class="content-layout">
+        <section id="feed" class="content-main">
+          <div class="empty-state">正在加载文章...</div>
+        </section>
+
+        <aside class="content-side">
+          <section class="sync-panel">
+            <div class="sync-header">
+              <h3>数据同步</h3>
+              <span id="lastSyncText">最近同步：尚未同步</span>
+            </div>
+            <div class="sync-quick">
+              <button id="quickSyncBtn">一键更新文章</button>
+              <small>会先刷新 we-mp-rss，再同步最近 30 篇</small>
+            </div>
+            <details class="data-panel">
+              <summary>高级选项</summary>
+              <section class="toolbar">
+                <div class="tool-item">
+                  <label>源地址</label>
+                  <input id="syncBaseUrl" value="http://127.0.0.1:8001" />
+                </div>
+                <div class="tool-item">
+                  <label>we-mp-rss 用户名</label>
+                  <input id="syncUsername" value="admin" />
+                </div>
+                <div class="tool-item">
+                  <label>we-mp-rss 密码</label>
+                  <input id="syncPassword" type="password" value="admin@123" />
+                </div>
+                <div class="tool-item">
+                  <label>同步数量</label>
+                  <input id="syncLimit" value="30" />
+                </div>
+                <div class="tool-item">
+                  <label>feed_id（可选）</label>
+                  <input id="syncFeedIds" placeholder="逗号分隔，例如 MP_WXS_3073282833" />
+                </div>
+                <div class="tool-item">
+                  <label>授权状态</label>
+                  <div id="authStatusText" class="auth-status-box">待检查</div>
+                </div>
+                <div class="tool-item">
+                  <button id="syncBtn">按高级参数更新</button>
+                </div>
+                <div class="sync-tools">
+                  <button id="checkAuthBtn" class="alt">检查授权状态</button>
+                  <button id="showAuthQrBtn" class="alt">打开扫码授权</button>
+                  <button id="cleanupDupBtn" class="alt">清理重复数据（title+publish_date）</button>
+                  <button id="reconcileDeleteBtn" class="alt">校验删除 we-mp-rss 已不存在文章</button>
+                </div>
+                <div id="syncLog" class="sync-log">同步日志：暂无</div>
+                <div class="tool-item">
+                  <label for="jsonInput">手动导入 JSON（数组）</label>
+                  <textarea id="jsonInput" rows="4" placeholder='[{"title":"...","url":"...","publish_date":"2026-02-12","source":"机器之心"}]'></textarea>
+                  <button id="importBtn">导入</button>
+                </div>
+              </section>
+            </details>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <dialog id="detailDialog">
+      <article class="detail-card">
+        <section class="detail-main">
+          <h3 id="detailTitle"></h3>
+          <p><a id="detailUrl" target="_blank" rel="noreferrer">打开原文</a></p>
+          <div id="detailMeta"></div>
+
+          <h4>标签</h4>
+          <div id="tagList" class="tag-list"></div>
+
+          <div id="tagAddPanel" class="tag-actions">
+            <label>添加标签（输入可选择已有标签，也可直接新建）</label>
+            <div class="inline-actions">
+              <input id="tagInput" placeholder="输入标签名，回车或点击添加" />
+              <button id="tagAddBtn" class="alt" type="button">添加</button>
+            </div>
+            <div id="tagSuggestList" class="tag-suggest-list">输入后显示建议</div>
+          </div>
+          <div class="tag-actions">
+            <div class="inline-actions">
+              <button id="loadTagSuggestionsBtn" class="alt">AI 标签建议</button>
+              <button id="applyAllSuggestedTagsBtn" class="alt">一键应用建议</button>
+            </div>
+            <div id="tagSuggestionsBox" class="ai-box">暂无 AI 标签建议</div>
+          </div>
+
+          <h4>感想</h4>
+          <div class="tag-actions">
+            <textarea id="reflectionInput" rows="4" placeholder="总结观点、评估质量、记录可落地行动"></textarea>
+          </div>
+
+          <h4>AI Summary</h4>
+          <div class="tag-actions">
+            <div class="inline-actions">
+              <button id="loadAiSummaryBtn" class="alt">生成 / 刷新 AI Summary</button>
+              <button id="loadRelatedKnowledgeBtn" class="alt">Related Knowledge</button>
+              <button id="askFromArticleBtn" class="alt">AI Ask</button>
+            </div>
+            <div id="aiSummaryBox" class="ai-box">暂无 AI Summary</div>
+            <div id="relatedKnowledgeBox" class="ai-box">暂无关联知识</div>
+          </div>
+
+          <footer>
+            <button id="closeDialogBtn">关闭</button>
+          </footer>
+        </section>
+        <aside class="detail-extension">
+          <h4>分段笔记</h4>
+          <div class="tag-actions">
+            <textarea id="newNoteContent" rows="5" placeholder="粘贴原文关键信息，支持多段逐条添加"></textarea>
+            <button id="addNoteBtn">新增笔记段</button>
+          </div>
+          <div id="detailNotes" class="note-list">暂无笔记</div>
+        </aside>
+      </article>
+    </dialog>
+
+    <dialog id="tagManageDialog">
+      <article class="manage-card">
+        <h3>标签管理</h3>
+        <div class="tag-actions">
+          <input id="manageNewTagName" placeholder="输入新标签名" />
+          <button id="manageCreateTagBtn">新增标签</button>
+        </div>
+        <div id="manageTagList" class="manage-list">暂无标签</div>
+        <footer>
+          <button id="closeTagManageBtn">关闭</button>
+        </footer>
+      </article>
+    </dialog>
+
+    <dialog id="notesCenterDialog">
+      <article class="manage-card notes-center-card">
+        <h3>笔记中心</h3>
+        <div class="notes-filter">
+          <input id="notesKeywordInput" placeholder="按关键词检索笔记或文章标题" />
+          <select id="notesTagFilter">
+            <option value="">全部标签</option>
+          </select>
+          <button id="notesSearchBtn">搜索</button>
+        </div>
+        <div id="notesCenterList" class="notes-center-list">暂无笔记</div>
+        <footer>
+          <button id="closeNotesCenterBtn">关闭</button>
+        </footer>
+      </article>
+    </dialog>
+
+    <dialog id="reflectionsCenterDialog">
+      <article class="manage-card notes-center-card">
+        <h3>感想中心</h3>
+        <div class="notes-filter">
+          <input id="reflectionsKeywordInput" placeholder="按关键词检索感想或文章标题" />
+          <select id="reflectionsTagFilter">
+            <option value="">全部标签</option>
+          </select>
+          <button id="reflectionsSearchBtn">搜索</button>
+        </div>
+        <div id="reflectionsCenterList" class="notes-center-list">暂无感想</div>
+        <footer>
+          <button id="closeReflectionsCenterBtn">关闭</button>
+        </footer>
+      </article>
+    </dialog>
+
+    <dialog id="authQrDialog">
+      <article class="manage-card auth-card">
+        <h3>微信扫码授权</h3>
+        <p id="authQrHint" class="auth-qr-hint">二维码准备中...</p>
+        <img id="authQrImage" class="auth-qr-image" alt="we-mp-rss 微信扫码二维码" />
+        <div id="authQrStatus" class="auth-status-box">等待扫码</div>
+        <footer>
+          <button id="closeAuthQrBtn">关闭</button>
+        </footer>
+      </article>
+    </dialog>
+
+    <dialog id="knowledgeChatDialog">
+      <article class="manage-card notes-center-card">
+        <h3>Knowledge Chat</h3>
+        <div class="tag-actions">
+          <textarea id="knowledgeChatInput" rows="4" placeholder="例如：最近关于多智能体和推理优化，我形成了哪些稳定观点？"></textarea>
+          <button id="knowledgeChatSendBtn">提问</button>
+        </div>
+        <div id="knowledgeChatAnswer" class="ai-box">暂无回答</div>
+        <footer>
+          <button id="closeKnowledgeChatBtn">关闭</button>
+        </footer>
+      </article>
+    </dialog>
+
+    <dialog id="readingPriorityDialog">
+      <article class="manage-card notes-center-card">
+        <h3>Reading Priority</h3>
+        <div id="readingPriorityList" class="notes-center-list">暂无结果</div>
+        <footer>
+          <button id="closeReadingPriorityBtn">关闭</button>
+        </footer>
+      </article>
+    </dialog>
+
+    <dialog id="weeklyInsightDialog">
+      <article class="manage-card notes-center-card">
+        <h3>Weekly Insight</h3>
+        <div class="notes-filter">
+          <input id="weeklyStartInput" placeholder="开始日期，如 2026-03-01" />
+          <input id="weeklyEndInput" placeholder="结束日期，如 2026-03-09" />
+          <button id="weeklyGenerateBtn">生成周报</button>
+        </div>
+        <div id="weeklyInsightBox" class="ai-box">暂无周报</div>
+        <footer>
+          <button id="closeWeeklyInsightBtn">关闭</button>
+        </footer>
+      </article>
+    </dialog>
+
+    <dialog id="aiSettingsDialog">
+      <article class="manage-card notes-center-card">
+        <h3>AI 设置</h3>
+        <div class="ai-settings-guide">
+          最简单的配置方式：
+          1. 先选常用服务商
+          2. 只填 API Key（其余会自动带出）
+          3. 点击保存当前配置
+          4. 如果以后还想复用，可另存为方案
+        </div>
+        <div class="toolbar">
+          <div class="tool-item">
+            <label>模型提供商</label>
+            <select id="aiProviderSelect"></select>
+            <small id="aiProviderHint">选择后会自动带出推荐配置</small>
+          </div>
+          <div class="tool-item">
+            <label>已保存方案</label>
+            <div class="inline-actions">
+              <select id="aiProfileSelect">
+                <option value="">未选择已保存方案</option>
+              </select>
+              <button id="aiApplyProfileBtn" class="alt" type="button">使用该方案</button>
+              <button id="aiDeleteProfileBtn" class="alt" type="button">删除方案</button>
+            </div>
+            <small>适合保存多套配置，例如 DeepSeek、通义千问、Kimi。</small>
+          </div>
+          <div class="tool-item">
+            <label>方案名称（可选）</label>
+            <div class="inline-actions">
+              <input id="aiProfileNameInput" placeholder="例如：DeepSeek 日常 / 通义主力" />
+              <button id="aiSaveProfileBtn" class="alt" type="button">另存为方案</button>
+            </div>
+          </div>
+          <div class="tool-item">
+            <label>Base URL</label>
+            <input id="aiBaseUrlInput" placeholder="https://api.openai.com/v1" />
+          </div>
+          <div class="tool-item">
+            <label>API Key</label>
+            <input id="aiApiKeyInput" type="password" placeholder="留空表示保持当前已保存的 Key" />
+            <small id="aiApiKeyHint">当前未保存 API Key</small>
+          </div>
+          <div class="tool-item">
+            <label>聊天模型</label>
+            <input id="aiChatModelInput" placeholder="如 gpt-4.1-mini / deepseek-chat" />
+          </div>
+          <div class="tool-item">
+            <label>Embedding 模型</label>
+            <input id="aiEmbeddingModelInput" placeholder="不填时可切换为本地 embedding" />
+          </div>
+          <div class="tool-item">
+            <label><input id="aiUseLocalEmbeddingInput" type="checkbox" /> 使用本地 embedding（更省事，推荐给 DeepSeek）</label>
+          </div>
+        </div>
+        <div id="aiSettingsStatusBox" class="ai-box">尚未加载 AI 配置</div>
+        <footer class="inline-actions">
+          <button id="aiSaveSettingsBtn">保存当前配置</button>
+          <button id="aiTestSettingsBtn" class="alt">测试连接</button>
+          <button id="closeAiSettingsBtn">关闭</button>
+        </footer>
+      </article>
+    </dialog>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
